@@ -3,6 +3,7 @@ package de.dormeier.philipp;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -12,6 +13,11 @@ import java.util.Random;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+/**
+ * @version 1.1 There may still be a bug when right-shifting which causes not all tiles that should merge to actually merge.
+ * @author Philipp
+ *
+ */
 public class Board extends JPanel {
 
 	public static final int board_size = 4;
@@ -19,43 +25,81 @@ public class Board extends JPanel {
 	private NumberTile[][] numbers = new NumberTile[board_size][board_size];
 	private int[][] board = new int[board_size][board_size];
 	private int[][] prev_board = new int[board_size][board_size];
-	
-	private int emptyCells = 16;
+	private int emptyCells;
 	private int score;
+	private boolean keyGotPressed;
+	private boolean GAME_RUNNING;
 	
 	Random rand;
 	Random randTile;
+	
 	private JPanel gameboard;
 	private JLabel the_score;
-	private boolean keyGotPressed;
+	
+	private JLabel l_game_over;
+	private Font f_game_over;
+	private final String s_game_over = "Game Over! Punkte: %6d";
+	private final String html1 = "<html><center><body style='width: ";
+    private final String html2 = "px'>";
 	
 	public Board() {
 		setLayout(new BorderLayout());
 		setFocusable(true);
 		addKeyListener(new MyKeyListener());
+		setBackground(Color.BLACK);
 		
+		rand = new Random();
+		randTile = new Random();
+		startNewGame();
+	}
+	
+	/**
+	 * Starts a new game by initializing all Components and runtime-
+	 * changeable variables.
+	 */
+	private void startNewGame() {
+		emptyCells = board_size*board_size;
+		keyGotPressed = false;
+		score = 0;
+		
+		initializeUI();
+		initializeNumbers();
+		refreshUI();
+		
+		GAME_RUNNING = true;
+	}
+	
+	private void initializeUI() {
+		this.removeAll();
 		gameboard = new JPanel();
 		gameboard.setPreferredSize(new Dimension(GameWindow.BLOCK_SIZE*4, GameWindow.BLOCK_SIZE*4));
 		gameboard.setLayout(new GridLayout(board_size,board_size,NumberTile.borderSize, NumberTile.borderSize));
+		gameboard.setBackground(Color.DARK_GRAY);
+		gameboard.setVisible(true);
+		gameboard.setEnabled(true);
 		
 		the_score = new JLabel();
 		the_score.setPreferredSize(new Dimension(GameWindow.BLOCK_SIZE*board_size, GameWindow.BLOCK_SIZE/4));
-		the_score.setBackground(Color.WHITE);
+		the_score.setForeground(Color.WHITE);
 		the_score.setVisible(true);
 		
-		gameboard.setBackground(Color.DARK_GRAY);
-		rand = new Random();
-		randTile = new Random();
-		initializeNumbers();
-		refreshUI();
+		f_game_over = new Font("Helvetica", Font.BOLD, GameWindow.BLOCK_SIZE/3);
+		
+		l_game_over = new JLabel(s_game_over);
+		l_game_over.setFont(f_game_over);
+		l_game_over.setBackground(this.getBackground());
+		l_game_over.setForeground(Color.WHITE);
+		l_game_over.setVisible(true);
+		l_game_over.setEnabled(false);
 		
 		add(gameboard, BorderLayout.CENTER);
 		add(the_score, BorderLayout.NORTH);
 		
-		keyGotPressed = false;
-		score = 0;
 	}
 	
+	/**
+	 * Initializes all the GameTiles and places the 2 starting values.
+	 */
 	private void initializeNumbers() {
 		for(int y = 0; y < board_size; y++) {
 			for(int x = 0; x < board_size; x++) {
@@ -105,13 +149,7 @@ public class Board extends JPanel {
 									board[i-dy][x] = 1;
 									emptyCells++;
 									merged[i] = true;
-								} else {
-									//break;
 								}
-							}
-							else
-							{
-								//break;
 							}
 						}
 					}
@@ -147,13 +185,7 @@ public class Board extends JPanel {
 									score += board[i][x];
 									emptyCells++;
 									merged[i] = true;
-								} else {
-									break;
 								}
-							}
-							else
-							{
-								break;
 							}
 						}
 					}
@@ -186,13 +218,7 @@ public class Board extends JPanel {
 									board[y][i-dx] = 1;
 									emptyCells++;
 									merged[i] = true;
-								} else {
-									break;
 								}
-							}
-							else
-							{
-								break;
 							}
 						}
 					}
@@ -228,13 +254,7 @@ public class Board extends JPanel {
 									board[y][i-dx] = 1;
 									emptyCells++;
 									merged[i] = true;
-								} else {
-									//break;
 								}
-							}
-							else
-							{
-								//break;
 							}
 						}
 					}
@@ -252,12 +272,8 @@ public class Board extends JPanel {
 		for(int y = 0; y < board_size; y++) {
 			for(int x = 0; x < board_size; x++) {
 				numbers[board_size-1-y][x].updateTile(board[y][x]);
-				System.out.print(" " + board[y][x]);
 			}
-			System.out.print('\n');
 		}
-		System.out.print('\n');
-		System.out.println("[DEBUG] empty = " + emptyCells);
 		the_score.setText(String.format("Punkte: %6d", score));
 		repaint();
 	}
@@ -284,8 +300,6 @@ public class Board extends JPanel {
 				}
 			}
 			--emptyCells;
-		} else {
-			System.out.println("[DEBUG] No empty cell found.");
 		}
 	}
 	
@@ -316,12 +330,25 @@ public class Board extends JPanel {
 	 */
 	private void resetBoard() {
 		board = Arrays.stream(prev_board).map(int[]::clone).toArray(int[][]::new);
+		l_game_over.setVisible(false);
+		l_game_over.setEnabled(false);
+		gameboard.setVisible(true);
+		the_score.setVisible(true);
 		refreshUI();
 		keyGotPressed = false;
 	}
 	
+	/**
+	 * Gets called when the current game is over. Constructs and displays
+	 * the 'Game Over'-screen.
+	 */
 	private void gameOver() {
-		System.out.println("GAME OVER!!!!");
+		GAME_RUNNING = false;
+		this.removeAll();
+		add(l_game_over, BorderLayout.CENTER);
+		l_game_over.setText(html1 + (this.getWidth()-GameWindow.BLOCK_SIZE) + html2 + String.format(l_game_over.getText(), score));
+		l_game_over.setEnabled(true);
+		l_game_over.setVisible(true);
 	}
 	
 	/**
@@ -358,27 +385,26 @@ public class Board extends JPanel {
 			if(!keyGotPressed) {
 				keyGotPressed = true;
 				int key = k.getKeyCode();
-				switch(key) {
-				case KeyEvent.VK_UP:
-					doMove(0, -1);
-					break;
-				case KeyEvent.VK_RIGHT:
-					doMove(1, 0);
-					break;
-				case KeyEvent.VK_DOWN:
-					doMove(0, 1);
-					break;
-				case KeyEvent.VK_LEFT:
-					doMove(-1, 0);
-					break;
-				case KeyEvent.VK_R:
-					resetBoard();
-					break;
-				default:
-					System.out.println("[DEBUG] Another key was pressed!");
+				if(GAME_RUNNING) {
+					switch(key) {
+					case KeyEvent.VK_UP:
+						doMove(0, -1);
+						break;
+					case KeyEvent.VK_RIGHT:
+						doMove(1, 0);
+						break;
+					case KeyEvent.VK_DOWN:
+						doMove(0, 1);
+						break;
+					case KeyEvent.VK_LEFT:
+						doMove(-1, 0);
+						break;
+					}
+				} else {
+					if(key == KeyEvent.VK_SPACE)
+						startNewGame();
+					keyGotPressed = false;
 				}
-			} else {
-				System.out.println("[DEBUG] Taste bereits gedrückt");
 			}
 		}
 	}

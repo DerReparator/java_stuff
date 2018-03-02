@@ -13,7 +13,6 @@ public class GameWindow extends JFrame {
 		setResizable(false);
 		setLocationRelativeTo(null);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
-		
 		this.add(new Board(),BorderLayout.CENTER);
 		pack();
 	}
