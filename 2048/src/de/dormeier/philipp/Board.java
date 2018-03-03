@@ -15,6 +15,7 @@ import javax.swing.JPanel;
 
 /**
  * @version 1.1 There may still be a bug when right-shifting which causes not all tiles that should merge to actually merge.
+ * @version 1.1.1 Fixed the last bug in the base game.
  * @author Philipp
  *
  */
@@ -72,15 +73,15 @@ public class Board extends JPanel {
 	private void initializeUI() {
 		this.removeAll();
 		gameboard = new JPanel();
-		gameboard.setPreferredSize(new Dimension(GameWindow.BLOCK_SIZE*4, GameWindow.BLOCK_SIZE*4));
+		gameboard.setPreferredSize(new Dimension(GameWindow.BLOCK_SIZE*board_size, GameWindow.BLOCK_SIZE*board_size));
 		gameboard.setLayout(new GridLayout(board_size,board_size,NumberTile.borderSize, NumberTile.borderSize));
 		gameboard.setBackground(Color.DARK_GRAY);
 		gameboard.setVisible(true);
 		gameboard.setEnabled(true);
 		
 		the_score = new JLabel();
+		the_score.setForeground(Color.white);
 		the_score.setPreferredSize(new Dimension(GameWindow.BLOCK_SIZE*board_size, GameWindow.BLOCK_SIZE/4));
-		the_score.setForeground(Color.WHITE);
 		the_score.setVisible(true);
 		
 		f_game_over = new Font("Helvetica", Font.BOLD, GameWindow.BLOCK_SIZE/3);
@@ -88,7 +89,6 @@ public class Board extends JPanel {
 		l_game_over = new JLabel(s_game_over);
 		l_game_over.setFont(f_game_over);
 		l_game_over.setBackground(this.getBackground());
-		l_game_over.setForeground(Color.WHITE);
 		l_game_over.setVisible(true);
 		l_game_over.setEnabled(false);
 		
@@ -117,8 +117,8 @@ public class Board extends JPanel {
 	 * Update the game's logic.
 	 */
 	private void updateBoard(int dx, int dy) {
-		int startX = 3; /* rightwards */
-		int startY = 3; /* downwards */
+		int startX = board_size-1; /* rightwards */
+		int startY = board_size-1; /* downwards */
 
 		boolean[] merged = new boolean[board_size];
 		
@@ -165,7 +165,7 @@ public class Board extends JPanel {
 				for(int b = 0; b < merged.length; b++) {
 					merged[b] = false;
 				}
-				startY = 2;
+				startY = board_size-2;
 				while(startY >= 0) 		/* for every tile except the first */
 				{		
 					if(board[startY][x] > 1) 	/* if tile not empty */
@@ -198,7 +198,10 @@ public class Board extends JPanel {
 		else if(dx == 1) {
 			for(int y = 0; y < board_size; y++) /* for every row */
 			{	
-				startX = 2;
+				for(int b = 0; b < merged.length; b++) {
+					merged[b] = false;
+				}
+				startX = board_size-2;
 				while(startX >= 0) 		/* for every tile except the first */
 				{		
 					if(board[y][startX] > 1) 	/* if tile not empty */
@@ -326,9 +329,9 @@ public class Board extends JPanel {
 	}
 	
 	/**
-	 * Reset the board one step.
+	 * Sets the board back one step.
 	 */
-	private void resetBoard() {
+	private void setbackBoard() {
 		board = Arrays.stream(prev_board).map(int[]::clone).toArray(int[][]::new);
 		l_game_over.setVisible(false);
 		l_game_over.setEnabled(false);
@@ -346,6 +349,21 @@ public class Board extends JPanel {
 		GAME_RUNNING = false;
 		this.removeAll();
 		add(l_game_over, BorderLayout.CENTER);
+		l_game_over.setForeground(Color.WHITE);
+		l_game_over.setText(html1 + (this.getWidth()-GameWindow.BLOCK_SIZE) + html2 + String.format(l_game_over.getText(), score));
+		l_game_over.setEnabled(true);
+		l_game_over.setVisible(true);
+	}
+	
+	/**
+	 * Gets called when the current game is won. Constructs and displays
+	 * the 'Game Won'-screen.
+	 */
+	private void gameWon() {
+		GAME_RUNNING = false;
+		this.removeAll();
+		add(l_game_over, BorderLayout.CENTER);
+		l_game_over.setForeground(Color.GREEN);
 		l_game_over.setText(html1 + (this.getWidth()-GameWindow.BLOCK_SIZE) + html2 + String.format(l_game_over.getText(), score));
 		l_game_over.setEnabled(true);
 		l_game_over.setVisible(true);
@@ -361,6 +379,9 @@ public class Board extends JPanel {
 		} else {
 			for(int y = 0; y < board_size; y++) {
 				for(int x = 0; x < board_size; x++) {
+					/* GAME WON */
+					if(2048 == board[y][x])
+						gameWon();
 					/* check above */					
 					if(y-1 >= 0 && board[y-1][x] == board[y][x])
 						return false;
@@ -399,6 +420,9 @@ public class Board extends JPanel {
 					case KeyEvent.VK_LEFT:
 						doMove(-1, 0);
 						break;
+					default:
+						keyGotPressed = false;
+						break;
 					}
 				} else {
 					if(key == KeyEvent.VK_SPACE)
@@ -407,5 +431,5 @@ public class Board extends JPanel {
 				}
 			}
 		}
-	}
+	}	
 }

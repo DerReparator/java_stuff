@@ -1,6 +1,7 @@
 package de.dormeier.philipp;
 
 import java.awt.Color;
+import java.awt.Font;
 
 import javax.swing.JButton;
 
@@ -29,8 +30,8 @@ public class NumberTile extends JButton {
 	public NumberTile() {
 		setSize(GameWindow.BLOCK_SIZE-2*borderSize, GameWindow.BLOCK_SIZE-2*borderSize);
 		setBackground(tileBg[0]);
+		setForeground(Color.BLACK);
 		setEnabled(false);
-		setVisible(true);
 		setText("");
 		setVisible(true);
 	}
@@ -43,10 +44,17 @@ public class NumberTile extends JButton {
 		if(value > 1 && value % 2 != 0) {
 			throw new IllegalArgumentException("Der Tile-Wert wurde nicht richtig berechnet");
 		} else {
-			if(value > 1)
+			if(value <= 1) {
+				setText("");			
+			} else {
 				setText(""+value);
-			else
-				setText("");
+				if(value > 1000)
+					setFont(new Font("Helvetica", Font.PLAIN, GameWindow.BLOCK_SIZE/4));
+				else if(value > 100)
+					setFont(new Font("Helvetica", Font.PLAIN, GameWindow.BLOCK_SIZE/3));
+				else 
+					setFont(new Font("Helvetica", Font.PLAIN, GameWindow.BLOCK_SIZE/2));
+			}		
 			setBackground(tileBg[log2(value)]);
 		}
 	}

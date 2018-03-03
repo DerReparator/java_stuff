@@ -6,15 +6,17 @@ import javax.swing.SwingUtilities;
 
 public class GameWindow extends JFrame {
 
-	public static final int BLOCK_SIZE = 60;
+	public static final int BLOCK_SIZE = 96;
+	private Board b;
 	
 	public GameWindow() {
 		setTitle("Fusion 2048");
-		setResizable(false);
-		setLocationRelativeTo(null);
+		setResizable(true);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
-		this.add(new Board(),BorderLayout.CENTER);
+		b = new Board();
+		this.add(b,BorderLayout.CENTER);
 		pack();
+		setLocationRelativeTo(null);
 	}
 	
 	public static void main(String[] args) {
@@ -25,5 +27,4 @@ public class GameWindow extends JFrame {
 			}		
 		});
 	}
-
 }
